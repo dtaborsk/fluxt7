@@ -33,6 +33,9 @@ class CarSensorVisualizer {
         // Sensor size
         this.sensorSize = 0.2;
         
+        // Separate counters for sensor types
+        this.sensorCounters = { P: 0, T: 0 };
+        
         // Lighting
         this.setupLights();
         
@@ -377,14 +380,17 @@ class CarSensorVisualizer {
     }
     
     createSensor(position, sensorType = 'P') {
-        // Create sensor object
-        const sensorId = `sensor_${this.sensors.length + 1}`;
-        const sensorName = `${sensorType}_${String(this.sensors.length + 1).padStart(2, '0')}`;
+        // Create sensor object with per-type numbering
+        const type = sensorType.toUpperCase();
+        this.sensorCounters[type] = (this.sensorCounters[type] || 0) + 1;
+        const sensorIndex = String(this.sensorCounters[type]).padStart(2, '0');
+        const sensorId = `sensor_${type}_${sensorIndex}`;
+        const sensorName = `${type}_${sensorIndex}`;
         
         const sensor = {
             id: sensorId,
             name: sensorName,
-            type: sensorType,
+            type: type,
             position: position.clone(),
             value: 0,
             visible: true,
@@ -439,34 +445,44 @@ class CarSensorVisualizer {
     }
     
     createGradientSphereMaterial(sensorType) {
-        // Create a canvas with radial gradient (opaque center, transparent edges)
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const context = canvas.getContext('2d');
+        // Create a custom shader material for volumetric gradient
+        // Opacity is max at center, min (transparent) at edges
+        const baseColor = sensorType === 'P' ? new THREE.Color(0x8888ff) : new THREE.Color(0xff8888);
         
-        // Create radial gradient
-        const gradient = context.createRadialGradient(
-            canvas.width / 2, canvas.height / 2, 0,
-            canvas.width / 2, canvas.height / 2, canvas.width / 2
-        );
-        
-        // Gradient from opaque white to transparent
-        const baseColor = sensorType === 'P' ? '#8888ff' : '#ff8888';
-        gradient.addColorStop(0, baseColor);
-        gradient.addColorStop(0.7, baseColor);
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        context.fillStyle = gradient;
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        return new THREE.MeshBasicMaterial({
-            map: texture,
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                color: { value: baseColor }
+            },
+            vertexShader: `
+                varying vec3 vPosition;
+                void main() {
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                varying vec3 vPosition;
+                
+                void main() {
+                    // Calculate distance from center (normalized to 0-1)
+                    float dist = length(vPosition);
+                    
+                    // Opacity decreases from center to edge
+                    // Center (dist=0) -> opacity=1, Edge (dist=1) -> opacity=0
+                    float opacity = 1.0 - dist;
+                    
+                    // Clamp to avoid issues at the very edge
+                    opacity = max(opacity, 0.0);
+                    
+                    gl_FragColor = vec4(color, opacity);
+                }
+            `,
             transparent: true,
-            side: THREE.DoubleSide
+            depthWrite: false
         });
+        
+        return material;
     }
     
     createTextLabel(text) {
