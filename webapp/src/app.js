@@ -459,45 +459,44 @@ class CarSensorVisualizer {
     }
     
     createGradientSphereMaterial(sensorType) {
-        // Create a custom shader material for volumetric gradient
-        // Opacity is max at center, min (transparent) at edges
-        const baseColor = sensorType === 'P' ? new THREE.Color(0x8888ff) : new THREE.Color(0xff8888);
+        // Create a canvas with radial gradient texture
+        // This gives proper 2D gradient that looks volumetric on the sphere
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const context = canvas.getContext('2d');
         
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                color: { value: baseColor }
-            },
-            vertexShader: `
-                varying vec3 vPosition;
-                void main() {
-                    vPosition = position;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform vec3 color;
-                varying vec3 vPosition;
-                
-                void main() {
-                    // Calculate distance from center (normalized to 0-1)
-                    float dist = length(vPosition);
-                    
-                    // Opacity decreases from center to edge
-                    // Center (dist=0) -> opacity=1, Edge (dist=1) -> opacity=0
-                    float opacity = 1.0 - dist;
-                    
-                    // Clamp to avoid issues at the very edge
-                    opacity = max(opacity, 0.0);
-                    
-                    gl_FragColor = vec4(color, opacity);
-                }
-            `,
+        // Create radial gradient from center
+        const gradient = context.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.height / 2, canvas.width / 2
+        );
+        
+        // Base color for sensor type
+        const baseColor = sensorType === 'P' ? '#8888ff' : '#ff8888';
+        
+        // Gradient: opaque at center, transparent at edges
+        gradient.addColorStop(0, baseColor);
+        gradient.addColorStop(0.7, baseColor);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
             transparent: true,
-            depthWrite: false
+            depthWrite: false,
+            side: THREE.DoubleSide
         });
         
-        // Store reference to color uniform for later updates
-        material.userData.colorUniform = material.uniforms.color;
+        // Store reference for color updates
+        material.userData.baseColor = baseColor;
+        material.userData.canvas = canvas;
+        material.userData.context = context;
+        material.userData.gradient = gradient;
         
         return material;
     }
@@ -553,11 +552,17 @@ class CarSensorVisualizer {
             // Update sensor sphere color
             if (sensor.object && sensor.object.userData.sphere) {
                 const sphere = sensor.object.userData.sphere;
-                if (sphere.material.userData.colorUniform) {
-                    sphere.material.userData.colorUniform.value.setHex(color);
-                } else if (sphere.material.color) {
-                    // Fallback for basic materials
-                    sphere.material.color.setHex(color);
+                const material = sphere.material;
+                
+                // Handle canvas texture material
+                if (material.userData.canvas && material.userData.context) {
+                    this.updateGradientTexture(material, color, sensor.type);
+                } else if (material.userData.colorUniform) {
+                    // Shader material
+                    material.userData.colorUniform.value.setHex(color);
+                } else if (material.color) {
+                    // Basic material
+                    material.color.setHex(color);
                 }
             }
         });
@@ -663,10 +668,41 @@ class CarSensorVisualizer {
         });
     }
     
+    updateGradientTexture(material, colorHex, sensorType) {
+        // Update the canvas texture with new color
+        const canvas = material.userData.canvas;
+        const context = material.userData.context;
+        const baseColor = `#${colorHex.toString(16).padStart(6, '0')}`;
+        
+        // Clear and redraw gradient
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const gradient = context.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.height / 2, canvas.width / 2
+        );
+        
+        gradient.addColorStop(0, baseColor);
+        gradient.addColorStop(0.7, baseColor);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Update the texture
+        material.map.needsUpdate = true;
+        
+        // Store new base color
+        material.userData.baseColor = baseColor;
+    }
+    
     updateSensorToggles() {
         this.sensorToggles.innerHTML = '';
         
-        this.sensors.forEach(sensor => {
+        // Sort sensors by name (P_01, P_02, T_01, etc.)
+        const sortedSensors = [...this.sensors].sort((a, b) => a.name.localeCompare(b.name));
+        
+        sortedSensors.forEach(sensor => {
             const div = document.createElement('div');
             div.className = 'sensor-toggle';
             div.dataset.sensorId = sensor.id;
