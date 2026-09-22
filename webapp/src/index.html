@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Sensor Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Controls</h2>
+            
+            <div class="control-group">
+                <h3>Data File</h3>
+                <input type="file" id="csvFile" accept=".csv">
+            </div>
+
+            <div class="control-group">
+                <h3>Time Navigation</h3>
+                <div class="slider-container">
+                    <input type="range" id="timeSlider" min="0" max="100" value="0">
+                    <span id="timeLabel">Time: 0</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Sensor Types</h3>
+                <label>
+                    <input type="checkbox" id="showPressure" checked> Pressure (P_*)
+                </label>
+                <label>
+                    <input type="checkbox" id="showTemperature" checked> Temperature (T_*)
+                </label>
+            </div>
+
+            <div class="control-group">
+                <h3>Individual Sensors</h3>
+                <div id="sensorToggles" class="sensor-toggles"></div>
+            </div>
+
+            <div class="control-group">
+                <h3>Add Sensor</h3>
+                <div class="add-sensor-controls">
+                    <button id="toggleAddSensor" class="btn">Add Sensor Mode</button>
+                    <div id="sensorTypeSelect" class="sensor-type-select hidden">
+                        <label>
+                            <input type="radio" name="sensorType" value="P" checked> Pressure (P)
+                        </label>
+                        <label>
+                            <input type="radio" name="sensorType" value="T"> Temperature (T)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Sensor Size</h3>
+                <div class="slider-container">
+                    <input type="range" id="sensorSizeSlider" min="0.1" max="2" step="0.1" value="0.2">
+                    <span id="sensorSizeLabel">Size: 0.2</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Model</h3>
+                <select id="modelSelect">
+                    <option value="models/generic_car.gtlf">Generic Car</option>
+                    <option value="models/Honda+civic+type+R.glb">Honda Civic Type R</option>
+                    <option value="models/Nissan350Z.glb">Nissan 350Z</option>
+                    <option value="models/Nissan+Skyline.glb">Nissan Skyline</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <h3>Info</h3>
+                <div id="infoPanel" class="info-panel">
+                    <p id="modeInfo">Click "Add Sensor Mode" then click on the car to place a sensor.</p>
+                    <p>Use mouse to rotate, scroll to zoom.</p>
+                    <p id="sensorCount">Sensors: 0</p>
+                    <p id="currentTime">Current time: -</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-view">
+            <canvas id="threeCanvas"></canvas>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
