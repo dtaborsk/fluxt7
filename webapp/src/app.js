@@ -36,6 +36,9 @@ class CarSensorVisualizer {
         // Separate counters for sensor types
         this.sensorCounters = { P: 0, T: 0 };
         
+        // Track available indices for reuse when sensors are deleted
+        this.availableIndices = { P: [], T: [] };
+        
         // Lighting
         this.setupLights();
         
@@ -47,7 +50,7 @@ class CarSensorVisualizer {
         this.createGround();
         
         // Load default model
-        this.loadModel('models/generic_car.gtlf');
+        this.loadModel('models/Nissan+Skyline.glb');
         
         // Sensors
         this.sensors = [];
@@ -382,10 +385,21 @@ class CarSensorVisualizer {
     createSensor(position, sensorType = 'P') {
         // Create sensor object with per-type numbering
         const type = sensorType.toUpperCase();
-        this.sensorCounters[type] = (this.sensorCounters[type] || 0) + 1;
-        const sensorIndex = String(this.sensorCounters[type]).padStart(2, '0');
-        const sensorId = `sensor_${type}_${sensorIndex}`;
-        const sensorName = `${type}_${sensorIndex}`;
+        
+        // Get next available index for this type
+        let sensorIndex;
+        if (this.availableIndices[type] && this.availableIndices[type].length > 0) {
+            // Reuse a deleted index
+            sensorIndex = this.availableIndices[type].shift();
+        } else {
+            // Use next counter
+            this.sensorCounters[type] = (this.sensorCounters[type] || 0) + 1;
+            sensorIndex = this.sensorCounters[type];
+        }
+        
+        const sensorIndexStr = String(sensorIndex).padStart(2, '0');
+        const sensorId = `sensor_${type}_${sensorIndexStr}`;
+        const sensorName = `${type}_${sensorIndexStr}`;
         
         const sensor = {
             id: sensorId,
@@ -482,6 +496,9 @@ class CarSensorVisualizer {
             depthWrite: false
         });
         
+        // Store reference to color uniform for later updates
+        material.userData.colorUniform = material.uniforms.color;
+        
         return material;
     }
     
@@ -534,8 +551,14 @@ class CarSensorVisualizer {
             }
             
             // Update sensor sphere color
-            if (sensor.object && sensor.object.children[0]) {
-                sensor.object.children[0].material.color.setHex(color);
+            if (sensor.object && sensor.object.userData.sphere) {
+                const sphere = sensor.object.userData.sphere;
+                if (sphere.material.userData.colorUniform) {
+                    sphere.material.userData.colorUniform.value.setHex(color);
+                } else if (sphere.material.color) {
+                    // Fallback for basic materials
+                    sphere.material.color.setHex(color);
+                }
             }
         });
         
@@ -698,6 +721,22 @@ class CarSensorVisualizer {
     }
     
     deleteSensor(sensor) {
+        // Extract index from sensor name (e.g., "P_01" -> 1)
+        const parts = sensor.name.split('_');
+        if (parts.length === 2) {
+            const type = parts[0];
+            const index = parseInt(parts[1]);
+            if (!isNaN(index)) {
+                // Add index back to available pool
+                if (!this.availableIndices[type]) {
+                    this.availableIndices[type] = [];
+                }
+                this.availableIndices[type].push(index);
+                // Sort to reuse smallest indices first
+                this.availableIndices[type].sort((a, b) => a - b);
+            }
+        }
+        
         // Remove from sensors array
         const index = this.sensors.indexOf(sensor);
         if (index > -1) {
