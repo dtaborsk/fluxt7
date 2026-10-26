@@ -59,6 +59,9 @@ class CarSensorVisualizer {
         // Create garage
         this.createGarage();
         
+        // Set initial garage visibility
+        this.updateGarageVisibility();
+        
         // Load default model
         this.loadModel('models/Nissan+Skyline.glb');
         
@@ -158,14 +161,16 @@ class CarSensorVisualizer {
         const wallMaterial = new THREE.MeshStandardMaterial({
             color: 0xcccccc,
             roughness: 0.7,
-            metalness: 0.1
+            metalness: 0.1,
+            side: THREE.DoubleSide
         });
         
         // Floor material - darker concrete
         const floorMaterial = new THREE.MeshStandardMaterial({
             color: 0x555555,
             roughness: 0.8,
-            metalness: 0.2
+            metalness: 0.2,
+            side: THREE.DoubleSide
         });
         
         // Create floor (replaces the ground plane inside garage)
@@ -176,14 +181,15 @@ class CarSensorVisualizer {
         floor.receiveShadow = true;
         this.garageGroup.add(floor);
         
-        // Create back wall
+        // Create back wall - faces towards positive Z (towards the car)
         const backWallGeometry = new THREE.PlaneGeometry(width, height);
         const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        backWall.rotation.y = Math.PI;
         backWall.position.set(0, height / 2, -depth / 2);
         backWall.receiveShadow = true;
         this.garageGroup.add(backWall);
         
-        // Create left wall
+        // Create left wall - faces towards positive X (towards the car)
         const leftWallGeometry = new THREE.PlaneGeometry(depth, height);
         const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
         leftWall.rotation.y = Math.PI / 2;
@@ -191,15 +197,18 @@ class CarSensorVisualizer {
         leftWall.receiveShadow = true;
         this.garageGroup.add(leftWall);
         
-        // Create right wall
-        const rightWall = leftWall.clone();
+        // Create right wall - faces towards negative X (towards the car)
+        const rightWallGeometry = new THREE.PlaneGeometry(depth, height);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        rightWall.rotation.y = -Math.PI / 2;
         rightWall.position.set(width / 2, height / 2, 0);
+        rightWall.receiveShadow = true;
         this.garageGroup.add(rightWall);
         
         // Create front wall with opening (optional - can be left open)
         // For now, leave the front open for better viewing
         
-        // Create ceiling
+        // Create ceiling - faces downward (towards negative Y)
         const ceilingGeometry = new THREE.PlaneGeometry(width, depth);
         const ceiling = new THREE.Mesh(ceilingGeometry, wallMaterial);
         ceiling.rotation.x = Math.PI / 2;
