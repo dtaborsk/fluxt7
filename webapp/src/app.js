@@ -227,10 +227,10 @@ class CarSensorVisualizer {
         
         // Add 4 ceiling lights
         const lightPositions = [
-            {-4, 7, -4},
-            {4, 7, -4},
-            {-4, 7, 4},
-            {4, 7, 4}
+            [-4, 7, -4],
+            [4, 7, -4],
+            [-4, 7, 4],
+            [4, 7, 4]
         ];
         
         lightPositions.forEach(pos => {
