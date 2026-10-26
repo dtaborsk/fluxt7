@@ -7,6 +7,9 @@ class CarSensorVisualizer {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1a1a2e);
         
+        // Ground plane reference
+        this.groundPlane = null;
+        
         // Camera setup
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / (window.innerHeight - 20), 0.1, 1000);
         this.camera.position.set(0, 2, 5);
@@ -46,8 +49,15 @@ class CarSensorVisualizer {
         this.carModel = null;
         this.currentModelPath = null;
         
+        // Garage
+        this.garageGroup = null;
+        this.showGarage = true;
+        
         // Create ground plane
         this.createGround();
+        
+        // Create garage
+        this.createGarage();
         
         // Load default model
         this.loadModel('models/Nissan+Skyline.glb');
@@ -85,6 +95,7 @@ class CarSensorVisualizer {
         this.modeInfo = document.getElementById('modeInfo');
         this.sensorSizeSlider = document.getElementById('sensorSizeSlider');
         this.sensorSizeLabel = document.getElementById('sensorSizeLabel');
+        this.showGarageCheckbox = document.getElementById('showGarage');
         
         // Initialize sensor size label
         this.sensorSizeLabel.textContent = `Size: ${this.sensorSize.toFixed(1)}`;
@@ -129,6 +140,115 @@ class CarSensorVisualizer {
         ground.position.y = 0;
         ground.receiveShadow = true;
         this.scene.add(ground);
+        this.groundPlane = ground;
+    }
+    
+    createGarage() {
+        // Create a garage group
+        this.garageGroup = new THREE.Group();
+        this.scene.add(this.garageGroup);
+        
+        // Garage dimensions - large enough to fit any car model
+        const width = 15;
+        const depth = 15;
+        const height = 8;
+        const wallThickness = 0.2;
+        
+        // Wall material - light gray concrete
+        const wallMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            roughness: 0.7,
+            metalness: 0.1
+        });
+        
+        // Floor material - darker concrete
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x555555,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        
+        // Create floor (replaces the ground plane inside garage)
+        const floorGeometry = new THREE.PlaneGeometry(width, depth);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        floor.receiveShadow = true;
+        this.garageGroup.add(floor);
+        
+        // Create back wall
+        const backWallGeometry = new THREE.PlaneGeometry(width, height);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        backWall.position.set(0, height / 2, -depth / 2);
+        backWall.receiveShadow = true;
+        this.garageGroup.add(backWall);
+        
+        // Create left wall
+        const leftWallGeometry = new THREE.PlaneGeometry(depth, height);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.position.set(-width / 2, height / 2, 0);
+        leftWall.receiveShadow = true;
+        this.garageGroup.add(leftWall);
+        
+        // Create right wall
+        const rightWall = leftWall.clone();
+        rightWall.position.set(width / 2, height / 2, 0);
+        this.garageGroup.add(rightWall);
+        
+        // Create front wall with opening (optional - can be left open)
+        // For now, leave the front open for better viewing
+        
+        // Create ceiling
+        const ceilingGeometry = new THREE.PlaneGeometry(width, depth);
+        const ceiling = new THREE.Mesh(ceilingGeometry, wallMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = height;
+        ceiling.receiveShadow = true;
+        this.garageGroup.add(ceiling);
+        
+        // Add subtle edge lighting to walls
+        this.addGarageLighting();
+    }
+    
+    addGarageLighting() {
+        // Add ceiling lights - simple point lights to simulate garage lighting
+        const lightIntensity = 0.5;
+        const lightColor = 0xfff5eb; // Warm white
+        
+        // Add 4 ceiling lights
+        const lightPositions = [
+            {-4, 7, -4},
+            {4, 7, -4},
+            {-4, 7, 4},
+            {4, 7, 4}
+        ];
+        
+        lightPositions.forEach(pos => {
+            const light = new THREE.PointLight(lightColor, lightIntensity);
+            light.position.set(pos[0], pos[1], pos[2]);
+            light.castShadow = true;
+            light.shadow.mapSize.width = 512;
+            light.shadow.mapSize.height = 512;
+            this.garageGroup.add(light);
+            
+            // Add a small light fixture visual
+            const lightFixtureGeometry = new THREE.CylinderGeometry(0.1, 0.15, 0.3, 8);
+            const lightFixtureMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const lightFixture = new THREE.Mesh(lightFixtureGeometry, lightFixtureMaterial);
+            lightFixture.position.set(pos[0], pos[1] - 0.15, pos[2]);
+            this.garageGroup.add(lightFixture);
+        });
+    }
+    
+    updateGarageVisibility() {
+        if (this.garageGroup) {
+            this.garageGroup.visible = this.showGarage;
+        }
+        // Hide ground plane when garage is visible
+        if (this.groundPlane) {
+            this.groundPlane.visible = !this.showGarage;
+        }
     }
     
     loadModel(modelPath) {
@@ -313,6 +433,12 @@ class CarSensorVisualizer {
         // Sensor type toggles
         this.showPressure.addEventListener('change', () => this.updateSensorVisibility());
         this.showTemperature.addEventListener('change', () => this.updateSensorVisibility());
+        
+        // Garage toggle
+        this.showGarageCheckbox.addEventListener('change', () => {
+            this.showGarage = this.showGarageCheckbox.checked;
+            this.updateGarageVisibility();
+        });
         
         // Add sensor mode toggle
         this.toggleAddSensorBtn.addEventListener('click', () => {
