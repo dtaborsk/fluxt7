@@ -56,6 +56,9 @@ class CarSensorVisualizer {
         // Create ground plane
         this.createGround();
         
+        // Create skybox
+        this.createSkybox();
+        
         // Create garage
         this.createGarage();
         
@@ -157,20 +160,24 @@ class CarSensorVisualizer {
         const height = 8;
         const wallThickness = 0.2;
         
-        // Wall material - light gray concrete
+        // Create brick wall texture using canvas
+        const brickTexture = this.createBrickTexture();
         const wallMaterial = new THREE.MeshStandardMaterial({
-            color: 0xcccccc,
+            map: brickTexture,
             roughness: 0.7,
             metalness: 0.1,
             side: THREE.DoubleSide
         });
         
-        // Floor material - darker concrete
+        // Create concrete floor texture using canvas
+        const concreteTexture = this.createConcreteTexture();
         const floorMaterial = new THREE.MeshStandardMaterial({
-            color: 0x555555,
+            map: concreteTexture,
             roughness: 0.8,
             metalness: 0.2,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7
         });
         
         // Create floor (replaces the ground plane inside garage)
@@ -218,6 +225,156 @@ class CarSensorVisualizer {
         
         // Add subtle edge lighting to walls
         this.addGarageLighting();
+    }
+    
+    createBrickTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Brick color - reddish brown
+        const brickColor = '#8B2E2E';
+        // Mortar color - light gray
+        const mortarColor = '#CCCCCC';
+        
+        // Fill with mortar first
+        ctx.fillStyle = mortarColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Brick dimensions
+        const brickWidth = 60;
+        const brickHeight = 30;
+        const mortarGap = 5;
+        
+        // Draw bricks in a staggered pattern
+        ctx.fillStyle = brickColor;
+        for (let y = 0; y < canvas.height; y += brickHeight + mortarGap) {
+            const offset = (Math.floor(y / (brickHeight + mortarGap)) % 2) * (brickWidth / 2);
+            for (let x = -offset; x < canvas.width; x += brickWidth + mortarGap) {
+                ctx.fillRect(x, y, brickWidth, brickHeight);
+            }
+        }
+        
+        // Add some variation to brick colors
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i] === 139 && data[i+1] === 46 && data[i+2] === 46) {
+                // It's a brick pixel - add variation
+                const variation = Math.random() * 30 - 15;
+                data[i] = Math.max(0, Math.min(255, 139 + variation));
+                data[i+1] = Math.max(0, Math.min(255, 46 + variation / 2));
+                data[i+2] = Math.max(0, Math.min(255, 46 + variation / 2));
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        return texture;
+    }
+    
+    createConcreteTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base concrete color - medium gray
+        const baseColor = '#555555';
+        
+        // Fill background
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add noise/grain to simulate concrete texture
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const noise = Math.random() * 40 - 20;
+            data[i] = Math.max(0, Math.min(255, 85 + noise));
+            data[i+1] = Math.max(0, Math.min(255, 85 + noise));
+            data[i+2] = Math.max(0, Math.min(255, 85 + noise));
+        }
+        ctx.putImageData(imgData, 0, 0);
+        
+        // Add some darker patches
+        ctx.fillStyle = 'rgba(40, 40, 40, 0.3)';
+        for (let i = 0; i < 20; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 80 + 20;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Add some lighter patches
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 60 + 15;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        return texture;
+    }
+    
+    createSkybox() {
+        // Create a large cube for the skybox
+        const skyboxGeometry = new THREE.SphereGeometry(500, 60, 60);
+        
+        // Create a gradient sky texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        
+        // Create a gradient from light blue at top to darker blue at bottom
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#1a759f');
+        gradient.addColorStop(0.5, '#4a90b8');
+        gradient.addColorStop(1, '#0a2e4a');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add some subtle clouds
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        for (let i = 0; i < 15; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.6;
+            const width = Math.random() * 400 + 100;
+            const height = Math.random() * 80 + 20;
+            ctx.beginPath();
+            ctx.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+        
+        const skyboxMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.BackSide
+        });
+        
+        const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+        skybox.position.set(0, 0, 0);
+        this.scene.add(skybox);
+        
+        return skybox;
     }
     
     addGarageLighting() {
