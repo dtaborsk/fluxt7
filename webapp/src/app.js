@@ -5,7 +5,7 @@ class CarSensorVisualizer {
     constructor() {
         // Scene setup
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x1a1a2e);
+        this.scene.background = new THREE.Color(0x1a1a1a);
         
         // Ground plane reference
         this.groundPlane = null;
@@ -130,14 +130,14 @@ class CarSensorVisualizer {
         this.scene.add(directionalLight);
         
         // Hemisphere light for natural outdoor lighting
-        const hemiLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.6);
+        const hemiLight = new THREE.HemisphereLight(0xffccaa, 0x1a1a1a, 0.6);
         this.scene.add(hemiLight);
     }
     
     createGround() {
         const groundGeometry = new THREE.PlaneGeometry(20, 20);
         const groundMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x333333,
+            color: 0x2d2d2d,
             roughness: 0.8,
             metalness: 0.2
         });
@@ -521,7 +521,7 @@ class CarSensorVisualizer {
         // Car body
         const bodyGeometry = new THREE.BoxGeometry(4, 1.5, 2);
         const bodyMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x2c3e50,
+            color: 0x444444,
             flatShading: true
         });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
@@ -533,7 +533,7 @@ class CarSensorVisualizer {
         // Wheels
         const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
         const wheelMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x111111,
+            color: 0x1a1a1a,
             flatShading: true
         });
         
@@ -566,8 +566,8 @@ class CarSensorVisualizer {
         // Show help message in UI
         if (this.modeInfo) {
             this.modeInfo.innerHTML = 
-                '<span style="color: #e94560; font-weight: bold;">CORS Error:</span> ' +
-                'Run a local server to load models. <a href="#" onclick="alert(\'Option 1 (Python):\\n  cd /home/eddy/projekty/Stribog/webapp/src\\n  python -m http.server 8000\\n  Open: http://localhost:8000\\n\\nOption 2 (Node.js):\\n  npm install -g http-server\\n  cd /home/eddy/projekty/Stribog/webapp/src\\n  http-server\\n  Open: http://localhost:8080\')" style="color: #88f;">Click for help</a>';
+                '<span style="color: #ff6b35; font-weight: bold;">CORS Error:</span> ' +
+                'Run a local server to load models. <a href="#" onclick="alert(\'Option 1 (Python):\\n  cd /home/eddy/projekty/Stribog/webapp/src\\n  python -m http.server 8000\\n  Open: http://localhost:8000\\n\\nOption 2 (Node.js):\\n  npm install -g http-server\\n  cd /home/eddy/projekty/Stribog/webapp/src\\n  http-server\\n  Open: http://localhost:8080\')" style="color: #ff8c5a;">Click for help</a>';
         }
     }
     
@@ -736,7 +736,7 @@ class CarSensorVisualizer {
         
         // Sensor stem (to show attachment point)
         const stemGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8);
-        const stemMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 });
+        const stemMaterial = new THREE.MeshBasicMaterial({ color: 0x666666 });
         const stem = new THREE.Mesh(stemGeometry, stemMaterial);
         stem.position.y = -0.15;
         stem.rotation.x = Math.PI / 2;
@@ -765,7 +765,7 @@ class CarSensorVisualizer {
         );
         
         // Base color for sensor type
-        const baseColor = sensorType === 'P' ? '#8888ff' : '#ff8888';
+        const baseColor = sensorType === 'P' ? '#ff8c5a' : '#ff6b35';
         
         // Gradient: opaque at center, transparent at edges
         gradient.addColorStop(0, baseColor);
@@ -1012,7 +1012,7 @@ class CarSensorVisualizer {
             
             const colorDiv = document.createElement('div');
             colorDiv.className = 'sensor-color';
-            colorDiv.style.backgroundColor = sensor.type === 'P' ? '#8888ff' : '#ff8888';
+            colorDiv.style.backgroundColor = sensor.type === 'P' ? '#ff8c5a' : '#ff6b35';
             
             const label = document.createElement('label');
             label.textContent = sensor.name;
