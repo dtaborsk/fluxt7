@@ -94,6 +94,14 @@
             border-radius: 2px;
         }
 
+        /* Centered h2 container with left-aligned underline */
+        .centered-text {
+            text-align: center;
+        }
+        .centered-text h2 {
+            display: inline-block;
+        }
+
         h3 {
             font-size: 1.25rem;
             font-weight: 600;
@@ -110,7 +118,8 @@
         .lead {
             font-size: 1.2rem;
             color: var(--text);
-            max-width: 700px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         /* Buttons */
@@ -469,7 +478,7 @@
     <!-- Hero Section -->
     <section id="hero">
         <div class="container">
-            <div class="hero-badge animate-fade-in">Understanding airflows around and in your car</div>
+            <!-- <div class="hero-badge animate-fade-in">Understanding airflows around and in your car</div> -->
             <h1 class="animate-fade-in delay-1">Flux-T7</h1>
             <p class="lead animate-fade-in delay-2">
                 Visualize and analyze aerodynamics data in 3D. Understanding airflow behavior has never been easier or more intuitive.
@@ -478,8 +487,8 @@
                 <a href="#features" class="btn">Explore Features</a>
                 <a href="#contact" class="btn btn-outline">Get in Touch</a>
             </div>
-            <!-- Main graphic placeholder using placehold.co -->
-            <img src="https://placehold.co/800x450/2d2d2d/ff6b35?text=Flux-T7" alt="Flux-T7 placeholder graphic" class="placeholder-graphic animate-fade-in delay-4">
+            <!-- Main graphic -->
+            <!-- <img src="images/hero.jpg" alt="Flux-T7" class="placeholder-graphic animate-fade-in delay-4"> -->
         </div>
     </section>
 
@@ -488,13 +497,11 @@
         <div class="container">
             <div class="two-col">
                 <div class="animate-fade-in">
-                    <h2>What is Flux-T7</h2>
+                    <h2>What is Flux-T7?</h2>
                     <p>Flux-T7 is a combination of hardware sensors and a visualization tool. It was designed specifically for understand airflows around the car and inside the engine bay. It makes aerodynamics, airflow, and cooling analysis available to amateurs and semi-professional teams. </p>
-                    <p>Want to understand efficiency of your radiators around the track? Or improve fuel economy by streamlining airflow? Well now it's possible without either paying for an airtunnel or sticking pieces of cotton to your car.</p>
+                    <p>Want to understand efficiency of your radiators around the track? Or improve fuel economy by streamlining airflow? Well now it's possible without either paying for an wind tunnel or sticking pieces of cotton to your car.</p>
                 </div>
-                <div class="image-placeholder animate-fade-in delay-1">
-                    <span>Placeholder Graphic</span>
-                </div>
+                <img src="images/what-is-it.jpg" alt="Flux-T7 hardware" class="placeholder-graphic animate-fade-in delay-1">
             </div>
         </div>
     </section>
@@ -503,11 +510,9 @@
     <section id="for">
         <div class="container">
             <div class="two-col">
-                <div class="image-placeholder animate-fade-in">
-                    <span>Placeholder Graphic</span>
-                </div>
+                <img src="images/who-is-it-for.jpg" alt="Target audience" class="placeholder-graphic animate-fade-in">
                 <div class="animate-fade-in delay-1">
-                    <h2>Who is it for</h2>
+                    <h2>Who is it for?</h2>
                     <p>Amateurs tuning their ride</p>
                     <p>Semi-professionals that balance the price of reserving a wind tunnel compared to just slapping a bunch of sensors to the car and going for a drive</p>
                     <p>Professional teams that prefer making quick and small adjustments first and verifying results and only then spending precious time going into a wind tunnel</p>
@@ -520,8 +525,8 @@
     <!-- Features Section -->
     <section id="features">
         <div class="container">
-            <div class="animate-fade-in">
-                <h2 style="text-align: center; display: block;">What it can do</h2>
+            <div class="animate-fade-in centered-text">
+                <h2>What does it do?</h2>
                 <p style="text-align: center; max-width: 600px; margin: 0 auto 40px;">
                     The potential is high and underdeveloped
                 </p>
@@ -566,14 +571,23 @@
         <div class="container">
             <div class="two-col">
                 <div class="animate-fade-in">
-                    <h2>Why it exists</h2>
+                    <h2>How did I come up with it?</h2>
                     <p>As an owner of a Lotus Seven replica, a car known to have the worst aerodynamic drag coefficient of all serires production cars, I've always wondered if there was anything I could do about it. As a hobbyist, renting out a wind tunnel or drawing the car as a 3D model and applying advanced fluid dynamics software seemed out of reach. Designing custom hardware and writing software to help me understand pressure points was a fun idea!</p>
-                    <p> Furthermore, the car having such a narrow front means that there isn't much space for radiators. But there are three: water, oil, and an intercooler. They are placed somehow so that they fit. They overlap nearly totally. But nobody has measured which radiator needs cooling the most, and which one lacks the necessary airflow to perform well. And even if they have to overlap, we can still at least make decisions in which order they should be placed.</p>
+                    <p> Furthermore, the car having such a narrow front means that there isn't much space for radiators. But there are three: water, oil, and an intercooler. They are placed one after another, just so that they fit. They overlap nearly totally. But nobody has measured which radiator needs cooling the most, and which one lacks the necessary airflow to perform well. And even if they have to overlap, we can still at least make decisions in which order they should be placed. Assuming they all get enough airflow, you may want to place the hottest one the last to avoid transferring heat to the other.</p>
                     <p>Now we can track where air gets stuck, where it flows fast, and what effects it has on cooling. </p>
                 </div>
-                <div class="image-placeholder animate-fade-in delay-1">
-                    <span>Placeholder Graphic</span>
-                </div>
+                <img src="images/motivation.png" alt="Lotus Seven replica" class="placeholder-graphic animate-fade-in delay-1">
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section id="feedback">
+        <div class="container">
+            <div class="animate-fade-in" style="text-align: center;">
+                <h2>I want to hear from you!</h2>
+                <p>This project is currently in a feedback-collection phase. There is a functional prototype that demonstrated it is feasible, but a commercially-available tool would require further development. And for that I need to know what users actually need and what would make their lives better. </p>
+                <h3>If you have any thoughts whatsoever, please send me an e-mail! </h3>
             </div>
         </div>
     </section>
@@ -583,12 +597,9 @@
         <div class="container">
             <div class="animate-fade-in" style="text-align: center;">
                 <h2>About me</h2>
-                <div class="profile-placeholder">
-                    <i class="fas fa-user"></i>
-                    <span class="sr-only">Profile Picture</span>
-                </div>
+                <img src="images/ja_cropped.png" alt="Profile pic" class="placeholder-graphic animate-fade-in delay-1">
                 <p style="max-width: 600px; margin: 0 auto;">
-                    Just some guy. Master's in theoretical computer science from University in Copenhagen, experienced software engineer, tinkerer, enthusiast, an avid swing dancer. Pick a topic related to computers and I've probably done it - from hardware all the way to cloud computing and even experimental theoretical computer science. 
+                    Just some guy. Master's in theoretical computer science from University in Copenhagen, worked at CERN, experienced software engineer, tinkerer, enthusiast, an avid swing dancer. Pick a topic related to computers and I've probably done it - from hardware all the way to cloud computing and even experimental theoretical computer science. 
                 </p>
             </div>
         </div>
@@ -600,32 +611,32 @@
             <div class="animate-fade-in" style="text-align: center;">
                 <h2>Get in touch</h2>
                 <p style="max-width: 600px; margin: 0 auto;">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula.
+                    Currently the project is in the feedback collection phase. A prototype exists and is functional, but needs further development. If you can give feedback or just want to register interest, please send me an e-mail. It can be as simple as "I want it!" or more complex like "I work on X for Y and I would use such a tool if it could do Z".
                 </p>
             </div>
             <div class="contact-grid">
                 <div class="contact-item animate-fade-in delay-1">
                     <div class="contact-icon"><i class="fas fa-envelope"></i></div>
                     <h3>Email</h3>
-                    <p><a href="mailto:placeholder@example.com" style="color: var(--text-light); text-decoration: none;">placeholder@example.com</a></p>
+                    <p><a href="mailto:placeholder@example.com" style="color: var(--text-light); text-decoration: none;">dominik.taborsky@pm.me</a></p>
                 </div>
                 <div class="contact-item animate-fade-in delay-2">
                     <div class="contact-icon"><i class="fas fa-phone"></i></div>
                     <h3>Phone</h3>
-                    <p>+1 (555) 123-4567</p>
+                    <p>+420 605 934 746</p>
                 </div>
                 <div class="contact-item animate-fade-in delay-3">
                     <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                     <h3>Location</h3>
-                    <p>City, Country</p>
+                    <p>České Budějovice, Czech Republic</p>
                 </div>
             </div>
-            <div class="social-links animate-fade-in delay-4">
+            <!-- <div class="social-links animate-fade-in delay-4">
                 <a href="#" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
                 <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                 <a href="#" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
-            </div>
+            </div> -->
         </div>
     </section>
 

@@ -24,6 +24,9 @@ class CarSensorVisualizer {
         this.renderer.setSize(window.innerWidth - 280, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         
+        // Texture loader
+        this.textureLoader = new THREE.TextureLoader();
+        
         // Controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
@@ -65,8 +68,8 @@ class CarSensorVisualizer {
         // Set initial garage visibility
         this.updateGarageVisibility();
         
-        // Load default model
-        this.loadModel('models/Nissan+Skyline.glb');
+        // Load default model (changed to Honda Civic Type R)
+        this.loadModel('models/Honda+civic+type+R.glb');
         
         // Sensors
         this.sensors = [];
@@ -155,24 +158,32 @@ class CarSensorVisualizer {
         this.scene.add(this.garageGroup);
         
         // Garage dimensions - large enough to fit any car model
-        const width = 15;
-        const depth = 15;
+        const width = 30;  // Doubled from 15
+        const depth = 30;  // Doubled from 15
         const height = 8;
         const wallThickness = 0.2;
         
-        // Create brick wall texture using canvas
-        const brickTexture = this.createBrickTexture();
+        // Load PBR textures for walls and floor
+        const wallTextures = this.loadWhiteStuccoTextures();
+        const concreteTextures = this.loadConcreteTextures();
+        
+        // Create white stucco wall material - only visible from inside (front side)
         const wallMaterial = new THREE.MeshStandardMaterial({
-            map: brickTexture,
+            map: wallTextures.diffuseMap,
+            normalMap: wallTextures.normalMap,
+            roughnessMap: wallTextures.roughnessMap,
+            aoMap: wallTextures.aoMap,
             roughness: 0.7,
             metalness: 0.1,
-            side: THREE.DoubleSide
+            side: THREE.FrontSide  // Only render front side (visible from inside, invisible from outside)
         });
         
-        // Create concrete floor texture using canvas
-        const concreteTexture = this.createConcreteTexture();
+        // Create concrete floor material with PBR maps
         const floorMaterial = new THREE.MeshStandardMaterial({
-            map: concreteTexture,
+            map: concreteTextures.diffuseMap,
+            normalMap: concreteTextures.normalMap,
+            roughnessMap: concreteTextures.roughnessMap,
+            aoMap: concreteTextures.aoMap,
             roughness: 0.8,
             metalness: 0.2,
             side: THREE.DoubleSide,
@@ -190,7 +201,9 @@ class CarSensorVisualizer {
         
         // Create back wall - faces towards positive Z (towards the car)
         const backWallGeometry = new THREE.PlaneGeometry(width, height);
-        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        const backWallMaterial = wallMaterial.clone();
+        backWallMaterial.side = THREE.BackSide;  // Back wall needs BackSide to render correctly
+        const backWall = new THREE.Mesh(backWallGeometry, backWallMaterial);
         backWall.rotation.y = Math.PI;
         backWall.position.set(0, height / 2, -depth / 2);
         backWall.receiveShadow = true;
@@ -227,107 +240,58 @@ class CarSensorVisualizer {
         this.addGarageLighting();
     }
     
-    createBrickTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
+    loadWhiteStuccoTextures() {
+        // Load all white stucco PBR texture maps
+        const basePath = 'textures/white_stucco_02';
+        const diffuseMap = this.textureLoader.load(`${basePath}_diff_1k.png`);
+        const normalMap = this.textureLoader.load(`${basePath}_nor_gl_1k.png`);
+        const roughnessMap = this.textureLoader.load(`${basePath}_rough_1k.png`);
+        const aoMap = this.textureLoader.load(`${basePath}_ao_1k.png`);
         
-        // Brick color - reddish brown
-        const brickColor = '#8B2E2E';
-        // Mortar color - light gray
-        const mortarColor = '#CCCCCC';
+        // Configure textures
+        [diffuseMap, normalMap, roughnessMap, aoMap].forEach(texture => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+        });
         
-        // Fill with mortar first
-        ctx.fillStyle = mortarColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Brick dimensions
-        const brickWidth = 60;
-        const brickHeight = 30;
-        const mortarGap = 5;
-        
-        // Draw bricks in a staggered pattern
-        ctx.fillStyle = brickColor;
-        for (let y = 0; y < canvas.height; y += brickHeight + mortarGap) {
-            const offset = (Math.floor(y / (brickHeight + mortarGap)) % 2) * (brickWidth / 2);
-            for (let x = -offset; x < canvas.width; x += brickWidth + mortarGap) {
-                ctx.fillRect(x, y, brickWidth, brickHeight);
-            }
-        }
-        
-        // Add some variation to brick colors
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            if (data[i] === 139 && data[i+1] === 46 && data[i+2] === 46) {
-                // It's a brick pixel - add variation
-                const variation = Math.random() * 30 - 15;
-                data[i] = Math.max(0, Math.min(255, 139 + variation));
-                data[i+1] = Math.max(0, Math.min(255, 46 + variation / 2));
-                data[i+2] = Math.max(0, Math.min(255, 46 + variation / 2));
-            }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(4, 4);
-        return texture;
+        return { diffuseMap, normalMap, roughnessMap, aoMap };
     }
     
-    createConcreteTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
+    loadBrickTextures() {
+        // Load all brick PBR texture maps
+        const basePath = 'textures/red_brick';
+        const diffuseMap = this.textureLoader.load(`${basePath}_diff_1k.png`);
+        const normalMap = this.textureLoader.load(`${basePath}_nor_gl_1k.png`);
+        const roughnessMap = this.textureLoader.load(`${basePath}_rough_1k.png`);
+        const aoMap = this.textureLoader.load(`${basePath}_ao_1k.png`);
         
-        // Base concrete color - medium gray
-        const baseColor = '#555555';
+        // Configure textures
+        [diffuseMap, normalMap, roughnessMap, aoMap].forEach(texture => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+        });
         
-        // Fill background
-        ctx.fillStyle = baseColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return { diffuseMap, normalMap, roughnessMap, aoMap };
+    }
+    
+    loadConcreteTextures() {
+        // Load all concrete PBR texture maps
+        const basePath = 'textures/concrete_floor_worn_001';
+        const diffuseMap = this.textureLoader.load(`${basePath}_diff_1k.png`);
+        const normalMap = this.textureLoader.load(`${basePath}_nor_gl_1k.png`);
+        const roughnessMap = this.textureLoader.load(`${basePath}_rough_1k.png`);
+        const aoMap = this.textureLoader.load(`${basePath}_ao_1k.png`);
         
-        // Add noise/grain to simulate concrete texture
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            const noise = Math.random() * 40 - 20;
-            data[i] = Math.max(0, Math.min(255, 85 + noise));
-            data[i+1] = Math.max(0, Math.min(255, 85 + noise));
-            data[i+2] = Math.max(0, Math.min(255, 85 + noise));
-        }
-        ctx.putImageData(imgData, 0, 0);
+        // Configure textures
+        [diffuseMap, normalMap, roughnessMap, aoMap].forEach(texture => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+        });
         
-        // Add some darker patches
-        ctx.fillStyle = 'rgba(40, 40, 40, 0.3)';
-        for (let i = 0; i < 20; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const size = Math.random() * 80 + 20;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Add some lighter patches
-        ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-        for (let i = 0; i < 15; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const size = Math.random() * 60 + 15;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(4, 4);
-        return texture;
+        return { diffuseMap, normalMap, roughnessMap, aoMap };
     }
     
     createSkybox() {
@@ -379,7 +343,7 @@ class CarSensorVisualizer {
     
     addGarageLighting() {
         // Add ceiling lights - simple point lights to simulate garage lighting
-        const lightIntensity = 0.5;
+        const lightIntensity = 0.1;
         const lightColor = 0xfff5eb; // Warm white
         
         // Add 4 ceiling lights
@@ -442,6 +406,11 @@ class CarSensorVisualizer {
                 // Center and scale the model
                 model.position.set(0, 0, 0);
                 model.scale.set(1, 1, 1);
+                
+                // Raise Honda Civic Type R specifically as it clips into ground
+                if (modelPath.includes('Honda+civic+type+R')) {
+                    model.position.y = 1.0;
+                }
                 
                 // Enable shadows for all meshes
                 model.traverse((child) => {
